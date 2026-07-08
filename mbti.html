@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>중소벤처기업부 청년인턴 공직 성향 진단 시스템</title>
+    <style>
+        /* 중소벤처기업부 오피셜 아이덴티티 및 모던 토스 UX/UI 시스템 */
+        :root {
+            --gok-blue: #003764;      /* 메인 청색 */
+            --gok-red: #e4032e;       /* 포인트 적색 */
+            --gok-green: #008453;     /* 중기부 상생/녹색 포인트 */
+            --gok-gray: #575757;      /* 정부회색 */
+            --toss-light-blue: #edf4fa;
+            --text-main: #191f28;
+            --text-sub: #4e5968;
+            --text-desc: #8b95a1;
+            --border-line: #eceff2;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -webkit-tap-highlight-color: transparent; 
+        }
+
+        body {
+            background-color: #f2f4f6;
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 12px;
+        }
+
+        /* 스마트폰 최적화 가변 프레임 */
+        .app-frame {
+            background-color: #ffffff;
+            width: 100%;
+            max-width: 500px; 
+            min-height: calc(100vh - 24px); 
+            border-radius: 24px;
+            box-shadow: 0 16px 40px rgba(0, 55, 100, 0.04);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid var(--border-line);
+            transition: max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 고정 헤더 */
+        .app-header {
+            padding: 18px 20px;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            border-bottom: 1px solid var(--border-line);
+            background: #ffffff;
+            user-select: none;
+        }
+
+        .logo-image-area {
+            height: 38px; 
+            display: flex;
+            align-items: center;
+            cursor: pointer; 
+        }
+
+        .logo-image-area img {
+            height: 100%;
+            width: auto;
+            object-fit: contain;
+        }
+
+        /* 모바일 최적화 뷰 콘텐츠 패딩 */
+        .view-content {
+            padding: 28px 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            flex-grow: 1;
+        }
+
+        .panel.active {
+            display: flex;
+        }
+
+        /* 타이포그래피 모바일 스케일링 */
+        .headline {
+            font-size: 22px;
+            font-weight: 700;
+            line-height: 1.4;
+            letter-spacing: -0.4px;
+            color: var(--text-main);
+            margin-bottom: 12px;
+        }
+
+        .lead {
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--text-sub);
+            margin-bottom: 30px;
+        }
+
+        /* 하단 고정형 터치 버튼 */
+        .action-btn {
+            background-color: var(--gok-blue);
+            color: #ffffff;
+            border: none;
+            padding: 16px;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+            margin-top: auto; 
+        }
+
+        /* 진행 인디케이터 및 상단 제어바 */
+        .quiz-control-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .back-btn {
+            background: none;
+            border: 1px solid var(--border-line);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-sub);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .back-btn:hover {
+            background-color: #f8f9fa;
+        }
+
+        .track {
+            background-color: var(--border-line);
+            height: 4px;
+            border-radius: 2px;
+            margin-bottom: 32px;
+        }
+
+        .fill {
+            background-color: var(--gok-green);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        /* 모바일 전용 원터치 카드 */
+        .card-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-card {
+            background-color: #f8f9fa;
+            border: 1px solid transparent;
+            padding: 18px;
+            border-radius: 14px;
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1.5;
+            font-weight: 600;
+            color: var(--text-main);
+            transition: all 0.15s;
+        }
+
+        .option-card:hover, .option-card:active {
+            background-color: #ffffff;
+            border-color: var(--gok-blue);
+            box-shadow: 0 4px 12px rgba(0, 55, 100, 0.04);
+        }
+
+        /* 결과 화면 디자인 */
+        .badge {
+            align-self: flex-start;
+            background-color: #e6f6f0;
+            color: var(--gok-green);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .divider {
+            height: 1px;
+            background-color: var(--border-line);
+            margin: 24px 0;
+        }
+
+        .match-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .rel-card {
+            padding: 16px;
+            border-radius: 12px;
+            border-left: 4px solid transparent;
+        }
+        .rel-card.good { background-color: #f2f8ff; border-left-color: var(--gok-blue); }
+        .rel-card.bad { background-color: #fff5f5; border-left-color: var(--gok-red); }
+
+        .rel-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+        .rel-card.good .rel-title { color: var(--gok-blue); }
+        .rel-card.bad .rel-title { color: var(--gok-red); }
+        .rel-desc { font-size: 12.5px; line-height: 1.5; color: var(--text-sub); }
+
+        /* 대시보드 무대 연출 레이아웃 */
+        .admin-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .metric-card {
+            background: #ffffff;
+            border: 1px solid var(--border-line);
+            padding: 16px;
+            border-radius: 12px;
+        }
+
+        .metric-label { font-size: 12px; color: var(--text-desc); margin-bottom: 4px; font-weight: 600; }
+        .metric-value { font-size: 22px; font-weight: 800; color: var(--gok-blue); }
+
+        .screen-dashboard-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 1.8fr;
+            gap: 20px;
+            height: 380px;
+        }
+
+        .scr-chart-zone {
+            border: 1px solid var(--border-line);
+            padding: 16px;
+            border-radius: 12px;
+            overflow-y: auto;
+            background: #ffffff;
+        }
+
+        .scr-desc-zone {
+            background-color: #f8f9fa;
+            border: 1px solid var(--border-line);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .scr-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 6px;
+        }
+        .scr-row.selected { background-color: var(--toss-light-blue); }
+
+        .scr-label { width: 140px; font-size: 12px; font-weight: 700; }
+        .scr-bar-bg { flex-grow: 1; background: #edf1f5; height: 12px; border-radius: 6px; overflow: hidden; margin: 0 10px; }
+        .scr-bar-fill { background: var(--gok-blue); height: 100%; width: 0%; transition: width 0.3s; }
+        .scr-val { width: 35px; font-size: 12px; font-weight: 700; text-align: right; }
+
+        .desc-placeholder { text-align: center; color: var(--text-desc); font-size: 14px; font-weight: 600; }
+
+        .reset-action-btn {
+            background-color: #fff5f5;
+            color: var(--gok-red);
+            border: 1px solid rgba(228, 3, 46, 0.2);
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 14px;
+            transition: all 0.2s;
+        }
+        .reset-action-btn:hover {
+            background-color: var(--gok-red);
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+
+<div id="main-frame" class="app-frame">
+    <header class="app-header">
+        <div class="logo-image-area" onclick="triggerHiddenAdmin()">
+            <img src="1.중소벤처기업부_국_가로.jpg" alt="중소벤처기업부">
+        </div>
+    </header>
+
+    <div class="view-content">
+        <div id="panel-intro" class="panel active">
+            <h1 class="headline" style="color: var(--gok-blue); font-size: 24px;">나의 공직 실무 성향은<br>어떤 모습일까요?</h1>
+            <p class="lead">중소벤처기업부 인턴십 과정에서 발현될 나만의 진짜 일 처리 스타일을 확인해보세요.</p>
+            <button class="action-btn" onclick="switchView('panel-quiz')">진단 시작하기</button>
+        </div>
+
+        <div id="panel-quiz" class="panel">
+            <div class="quiz-control-bar">
+                <div style="font-size: 13px; font-weight: 600; color: var(--text-sub);">문항 (<span id="quiz-progress-text">1</span>/15)</div>
+                <button class="back-btn" onclick="goToPrevQuestion()">이전</button>
+            </div>
+            <div class="track">
+                <div id="fill-bar" class="fill"></div>
+            </div>
+            <h2 id="quiz-title" class="headline" style="font-size: 17px; margin-bottom: 24px; min-height: 50px;">문항 로딩 중...</h2>
+            <div class="card-group">
+                <div id="ansA" class="option-card" onclick="processAnswer('A')">선택지 A</div>
+                <div id="ansB" class="option-card" onclick="processAnswer('B')">선택지 B</div>
+            </div>
+        </div>
+
+        <div id="panel-result" class="panel">
+            <div id="res-code" class="badge">실무 성향 분석 결과</div>
+            <h1 id="res-title" class="headline" style="font-size: 22px; margin-bottom: 6px;">유형 로딩 중...</h1>
+            <p id="res-line" class="lead" style="color: var(--gok-blue); font-weight: 700; margin-bottom: 16px;"></p>
+            <p id="res-full" class="lead" style="font-size: 13.5px; margin-bottom: 0; color: var(--text-sub); line-height: 1.6; white-space: pre-wrap;"></p>
+            
+            <div class="divider"></div>
+            
+            <h2 class="headline" style="font-size: 15px; margin-bottom: 12px;">인턴 협업 밸런스 가이드</h2>
+            <div class="match-grid">
+                <div class="rel-card good">
+                    <div id="card-good-title" class="rel-title">🤝 찰떡 파트너</div>
+                    <div id="card-good-desc" class="rel-desc" style="white-space: pre-wrap;"></div>
+                </div>
+                <div class="rel-card bad">
+                    <div id="card-bad-title" class="rel-title">⚠️ 스파크 파트너</div>
+                    <div id="card-bad-desc" class="rel-desc" style="white-space: pre-wrap;"></div>
+                </div>
+            </div>
+            <button class="action-btn" style="background-color: #edf1f5; color: var(--text-sub); margin-top: 24px; box-shadow: none;" onclick="location.reload()">다시 진단하기</button>
+        </div>
+
+        <div id="panel-admin" class="panel">
+            <h1 class="headline" style="font-size: 20px; margin-bottom: 4px; color: var(--gok-blue);">실시간 검사 현황 브리핑</h1>
+            <p class="lead" style="margin-bottom: 18px; font-size: 13px;">유형 리스트를 클릭하시면 심층 해설지가 우측 스크린에 대형 출력됩니다.</p>
+            
+            <div class="admin-metrics">
+                <div class="metric-card">
+                    <div class="metric-label">현재 참여 완료자</div>
+                    <div id="m-total" class="metric-value">0명</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">기수 내 대세 성향</div>
+                    <div id="m-trend" class="metric-value" style="font-size: 15px; margin-top: 4px; color: var(--gok-green);">데이터 수집 중</div>
+                </div>
+            </div>
+
+            <div class="screen-dashboard-layout">
+                <div id="scr-chart" class="scr-chart-zone"></div>
+                <div id="scr-desc" class="scr-desc-zone">
+                    <div class="desc-placeholder">좌측의 인턴 유형을 선택하시면<br>대형 브리핑 카드가 활성화됩니다.</div>
+                </div>
+            </div>
+            <button class="reset-action-btn" onclick="clearMockDatabase()">대시보드 누적 데이터 전체 초기화</button>
+            <button class="action-btn" style="background-color: var(--text-main); margin-top: 14px;" onclick="exitAdminPanel()">테스트 메인으로 복귀</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 오타 코드 완벽 수정본 (EI: 5, SN: 5, TF: 5)
+    const questions = [
+        { 
+            type: 'EI', 
+            q: '인턴 기수 전체가 모인 세미나실, 강사가 "의견 있으신 분 손들고 말씀해 달라"고 한다면?', 
+            a: '생각이 완벽히 정리되지 않았어도 마이크를 잡고 이야기를 뱉으면서 논리를 확장해 나간다.', 
+            b: '머릿속으로 완벽한 문장 구조를 끝까지 다듬은 뒤, 정말 확신이 서거나 질문이 끝난 후 조용히 제출한다.' 
+        },
+        { 
+            type: 'EI', 
+            q: '동기가 "인턴십 끝나고 다 같이 제주도 종강 여행 가자"고 대형 프로젝트를 단톡방에 던졌다면?', 
+            a: '대박 무조건 가야지! 하며 즉시 비행기 표나 숙소 링크를 마구 퍼오며 텐션을 올린다.', 
+            b: '단톡방 대화 속도를 조용히 지켜보다가, 구체적인 예산이나 일정이 어느 정도 픽스되면 참여 여부를 알린다.' 
+        },
+        { 
+            type: 'EI', 
+            q: '매일 출근하는 부서 내 내 책상의 물리적 환경 중 내가 더 편안하게 느끼는 배치는?', 
+            a: '동기들과 고개를 돌리면 언제든 소통할 수 있고 파티션이 비교적 낮아 탁 트인 개방형 자리', 
+            b: '구석 모퉁이에 있어서 등 뒤로 사람들이 지나다니지 않고 모니터가 완벽히 보호되는 요새형 자리' 
+        },
+        { 
+            type: 'EI', 
+            q: '부서 실무 중 스트레스가 극에 달했을 때, 나도 모르게 취하게 되는 본능적인 행동은?', 
+            a: '동기에게 메신저 창을 켜서 속사포 텍스트로 상황을 털어놓거나 전화를 걸어 수다를 떨어야 풀린다.', 
+            b: '메신저 알림을 잠시 끄고, 혼자 타이핑을 치거나 커피 한 잔을 마시며 고독을 즐겨야 풀린다.' 
+        },
+        { 
+            type: 'EI', 
+            q: '부서 점심시간, 과장님이 "다 같이 새로 생긴 핫한 연돈 맛집 갈까?"라고 하신다면?', 
+            a: '부서 선배들과 섞여 앉아 새로운 화제로 수다를 떨며 밥을 먹는 자리가 어색하지 않고 즐겁다.', 
+            b: '밥이 입으로 들어가는지 코로 들어가는지 모를 정도로 신경 쓰여서, 차라리 마음 편한 동기들끼리 먹고 싶다.' 
+        },
+        { 
+            type: 'SN', 
+            q: '부서 사수 주무관님이 나를 평가할 때, 어떤 문장에 더 기분이 좋을까?', 
+            a: 'ㅇㅇ 인턴은 붙임성이 좋고 리액션이 훌륭해서 부서 분위기가 확 사네!', 
+            b: 'ㅇㅇ 인턴은 진중하고 침착해서 어떤 복잡한 일을 맡겨도 마음이 아주 놓여!' 
+        },
+        { 
+            type: 'SN', 
+            q: '사수 주무관님이 "이번 청년인턴 실무 가이드를 제작할 건데 자율적으로 해봐"라며 백지 양식을 줬을 때?', 
+            a: '아무 가이드라인이 없어서 오히려 막막하고 스트레스를 받는다. 차라리 정형화된 서식을 지정해 주면 좋겠다.', 
+            b: '내 맘대로 목차를 구성하고 디자인 레이아웃을 짤 수 있는 완벽한 자유도가 주어져 도파민이 돌고 신난다.' 
+        },
+        { 
+            type: 'SN', 
+            q: '새로운 주간 기안문이나 보고서 작성 미션을 받았을 때 나의 첫 접근법은?', 
+            a: '이전 기수 선배 인턴들이 작성했던 검증된 기존 합격 문서 양식과 과거 추진 팩트 수치부터 꼼꼼히 수집한다.', 
+            b: '이번 보고서가 지향해야 할 새로운 청년 정책의 트렌드와 거시적인 방향성, 비전 슬로건 아이디어부터 구상한다.' 
+        },
+        { 
+            type: 'SN', 
+            q: '아이디어 회의 중 동기가 현실성 없는 다소 파격적이고 힙한 제안을 던졌을 때 내 머릿속 생각은?', 
+            a: '아이디어는 신선하지만, 현재 책정된 예산이나 관련 내부 규정상 현실적으로 집행이 불가능해 보인다.', 
+            b: '현실적인 제약은 나중에 맞추면 되니, 이 참신한 콘셉트를 어떻게 더 파격적으로 발전시킬 수 있을지 흥미가 생긴다.' 
+        },
+        { 
+            type: 'SN', 
+            q: '업무 중 단순 반복적이지만 오차율 0%의 정확성이 요구되는 대규모 데이터 정리 실무를 맡았을 때?', 
+            a: '규칙과 가이드라인이 명확해서 잡생각 없이 채워 넣으면 되니까 마음이 오히려 편하고 안정감이 든다.', 
+            b: '10분만 지나도 지루해서 견디기 힘들다. 이 반복 작업을 자동화하거나 완전히 다르게 바꿀 기획 궁리부터 시작한다.' 
+        },
+        { 
+            type: 'TF', 
+            q: '회의 도중 동기 두 명이 의견 조율이 안 돼 감정이 상해 분위기가 싸해졌을 때, 내 머릿속 회로는?', 
+            a: '누구 주장의 데이터 근거가 더 빈약한 거지? 팩트 체크해서 논리적 하자가 있는 쪽을 설득해야겠다.', 
+            b: '아, 분위기 어쩌지... 둘 다 무안하지 않게 회의 끝나고 메신저로 따로 커피 마시자고 다독여야겠다.' 
+        },
+        { 
+            type: 'TF', 
+            q: '내가 생각하는 조직 생활에서 가장 "일 잘하는 동기"의 절대적인 정의는?', 
+            a: '사적인 감정 개입 없이 공과 사 철저히 구분하고, 자기 몫의 업무 산출물을 기한 내 오차 없이 대령하는 인턴', 
+            b: '모난 데 없이 온화한 성품으로 주변 동기들을 배려하고, 조직 전체의 유대감과 화합을 끌어올리는 인턴' 
+        },
+        { 
+            type: 'TF', 
+            q: '조별 퀴즈 배틀 우승 후 상금으로 상품권이 나왔다. 내가 생각하는 가장 공정한 분배 방식은?', 
+            a: '이번 퀴즈쇼에서 실제로 정답판을 가장 많이 맞히고 자료 서치를 캐리한 핵심 기여도 지분별 차등 분배', 
+            b: '기여도와 상관없이 한 조에서 같이 고생하고 숨 쉬며 앉아있었던 모든 조원에게 단 1원의 오차도 없는 N분의 1 균등 분배' 
+        },
+        { 
+            type: 'TF', 
+            q: '부서 내에서 선배 주무관님들이 나를 대할 때, 나는 어떤 관계일 때 가장 직무 만족도가 높을까?', 
+            a: '사적인 질문은 일절 없이 오직 업무 지시와 피드백만 명확하고 깔끔하게 오가는 드라이한 비즈니스 관계', 
+            b: '주말에 뭐 했는지 안부도 묻고, 실무 고민이나 진로 상담도 정을 나누며 멘토링받을 수 있는 끈끈한 인간적 관계' 
+        },
+        { 
+            type: 'TF', 
+            q: '업무 중 대형 실수를 저질러 부서 과장님께 크게 깨지고 자리에서 낙담하고 있는 동기에게 내가 건넬 위로는?', 
+            a: '이미 벌어진 일이니까 해결책부터 찾자. 사수님께 보고할 리커버리 대안 시나리오 같이 파일링해 줄게. 해결책 제시', 
+            b: '헐... 너 진짜 당황했겠다. 과장님이 오늘 유독 심하셨네. 네 잘못 아니니까 너무 기죽지 마. 정서적 공감' 
+        }
+    ];
+
+    // 하이퍼 리얼리즘 8종 정밀분석 해설 데이터북
+    const profiles = {
+        "OFR": { 
+            title: "실무 타임어택 해결사", 
+            line: "과장님 결재판 터지기 직전, 칼 같은 팩트 폭격으로 서류를 통과시킵니다.", 
+            desc: "● 실무 스타일\n공과 사 구분이 서슬 퍼런 작두 같은 실무형 파이터입니다. 부서에 긴급 지출 현안이나 국회 요구 자료가 터져 장내가 패닉에 빠져도, 혼자 차분하게 '일단 예산 지침 수치랑 행안부 매뉴얼 규정부터 열어보시죠'라며 감정 싹 빼고 결론을 도출해 냅니다.\n\n● 사수들의 막후 평판\n'ㅇㅇ 인턴은 사적인 잡담이 없어서 드라이해 보일 순 있는데, 엑셀 필터링 취합이나 원장 정산 하나는 계장님들보다 깔끔하게 털어줘서 일할 맛 난다'며 무한 신뢰를 보냅니다.\n\n● 카타르시스 모먼트\n눈대중으로 대충 스페이스바 연타 쳐서 정렬한 동기들의 깨진 서식을 발견하고, 아래아한글 단축키 'Ctrl + 가로 대괄호'와 정렬 매커니즘을 동원해 오차율 0%의 칼정렬 문서로 조용히 완벽 개조했을 때 극상의 희열을 느낍니다.\n\n● 전용 실무 치트키\n[Ctrl + N, T (표 만들기)] 와 [Alt + T (문단 모양 복사)]", 
+            match: "조용한 문서 고수", 
+            matchBody: "구구절절 불필요한 사담을 섞지 않아도 사내 메신저를 통해 정확한 통계 수치 파일과 단축키 꿀팁 링크를 쿨하게 주고받으며, 서로의 압도적인 산출물 완성도를 소리 없이 리스펙트하는 완벽한 비즈니스 파트너입니다.", 
+            clash: "인류애 가득한 조력자", 
+            clashBody: "당장 10분 뒤에 상부 기안 결재 라인 타고 올라가야 해서 심장이 터질 지경인데, '지원 대상 소상공인들의 감성적 컨디션과 조직원들의 정서적 합의 가치관'을 논하며 타임라인을 한없이 딜레이시킬 때 깊은 회의감이 밀려옵니다." 
+        },
+        "OFE": { 
+            title: "부서 소통 매니저", 
+            line: "사수 주무관님 컨디션과 동기들의 개별 멘탈을 실시간으로 올케어합니다.", 
+            desc: "● 실무 스타일\n기수 내 최고의 네트워킹 매스터이자 걸어 다니는 소통 전파상입니다. 아침에 출근하자마자 부서 내부 공기가 어두우면 '오늘 과장님 무슨 일 있으신가?' 귀신같이 안색을 살피고, 조원들이 업무 분담 중 미세하게 서운해하는 포인트를 말하지 않아도 눈빛만으로 간파합니다.\n\n● 사수들의 막후 평판\n'ㅇㅇ 인턴은 붙임성이 탈인턴급이라 타 부서 협조 구하러 보낼 때 민원인 응대 프리패스다. 부서에 놔두기만 해도 조직 분위기가 화사해진다'며 이뻐라 하십니다.\n\n● 카타르시스 모먼트\n조별 과제를 하다가 의견이 엇갈려 파탄 나기 직전의 험악한 분위기를 특유의 말랑말랑한 중재 멘트와 유머로 반전시키고, 결국 모두가 감동의 눈물을 흘리며 상생하는 해피엔딩 합의점을 도출해 냈을 때 심장이 터질 듯한 보람을 느깁니다.\n\n● 전용 실무 치트키\n[사내 메신저 쪽지 기능] 및 [조치원역/대전역 인근 회식 장소 리스트 업]", 
+            match: "PRO 서포터 묵묵이", 
+            matchBody: "내가 앞에서 화려하게 마이크를 잡고 슬로건을 외치며 무대를 이끌 때, 내가 미처 챙기지 못한 후방의 엑셀 데이터 리서치와 예산 정산 서류를 200% 완벽하게 백업해 두고 따뜻한 응원을 건네주는 등 뒤의 은둔형 수호자입니다.", 
+            clash: "방구석 고독한 연구원", 
+            clashBody: "친해지고 싶어서 커피 한 잔 들고 자리에 찾아가 스몰토크를 건네거나 단체 대화방에 환영 이모티콘 멘션을 던져도, '네, 용건만 메신저 텍스트로 주시면 취합하겠습니다'라며 철벽 치고 고독 방을 유지할 때 서운함이 대기권을 뚫고 올라갑니다." 
+        },
+        "OVR": { 
+            title: "아이디어 빌드업 전략가", 
+            line: "우주로 갈 뻔한 파격 기획안을 정교한 보고서 프레임에 때려 박습니다.", 
+            desc: "● 실무 스타일\n거시적 정책 트렌드 분석과 파격적인 벤처 규제 개혁 대안 구상에 최적화된 하이퍼 인공지능형 브레인입니다. 아이디어 회의실에서 가장 눈이 번작이며 혁신을 외치지만, 단순히 뜬구름만 잡는 몽상가가 아닙니다. 본인이 던진 거대한 비전을 상부 결재 라인이 결코 거절하지 못하도록 촘촘한 기획서 목차와 통계적 인과관계로 입증해 내는 설계 지능을 갖췄습니다.\n\n● 사수들의 막후 평판\n'가끔 전례가 없는 무서운 제안을 가져와서 당황스럽긴 한데, 밤새 해외 주요 선진국 규제 샌드박스 성공 사례를 15개씩 레퍼런스로 찾아와 보고서 서두에 박아버리는 실행력을 보면 혀를 내두르게 된다'고 평가합니다.\n\n● 카타르시스 모먼트\n기존의 고루하고 반복적이던 소상공인 홍보 프로세스를 완전히 뒤엎는 새로운 플랫폼 제휴 안을 기획해 상신하고, 과장님 입에서 '오, 이거 신선한데? 본청에 우수사례로 보고하자'라는 감탄이 터져 나왔을 때 온몸에 소름이 돋는 카타르시스를 맛봅니다.\n\n● 전용 실무 치트키\n[Alt + Shift + N (자간 좁히기)] 와 [해외 중소기업 정책 동향 리포트 북]", 
+            match: "독립 연구원", 
+            matchBody: "내가 던지는 거대하고 힙한 아이디어 스케일의 맥락을 단번에 알아듣고, 그 기획을 현실화할 수 있는 정교한 글로벌 스타트업 투자 동향 리포트와 가중치 통계 지표를 조용히 서랍장에서 꺼내 공급해 주는 최고의 지적 파트너입니다.", 
+            clash: "PRO 서포터 묵묵이", 
+            clashBody: "세상을 바꿀 청년 창업 규제 타파 종합 기획서를 신나서 팩트 브리핑하러 가면, '근데 이거 우리 청 공식 아래아한글 양식 서식이랑 폰트 규격에 안 맞는데요'라며 자간 오차부터 따지고 들어 기획초동 단계부터 숨을 턱턱 막히게 만듭니다." 
+        },
+        "OVE": { 
+            title: "트렌디 홍보 크리에이터", 
+            line: "경직된 공직 문서의 벽을 단숨에 부수는 힙한 안목의 소유자입니다.", 
+            desc: "● 실무 스타일\n지치지 않는 비글미와 저세상 텐션으로 부서 전체의 비타민 역할을 자처하는 크리에이티브 천재입니다. 딱딱하게 굳어있는 기존 중기부 카드뉴스 양식을 과감히 거부하며, 요즘 유행하는 밈 챌린지와 청년들이 열광할 인스타 숏폼 릴스 콘셉트를 짜내어 부서 결재 라인의 안면 근육을 움직이게 만드는 주역입니다.\n\n● 사수들의 막후 평판\n'정형화된 숫자 필터링이나 단순 서류 복사 미션을 주면 영혼이 가출한 눈으로 앉아있는데, 행사 기획이나 카드뉴스 카피 짜보라고 판 깔아주면 밤을 새워도 눈에서 불꽃이 튄다'며 신기해하십니다.\n\n● 카타르시스 모먼트\n내 아이디어로 가공한 정책 카드뉴스 게시글에 청년들의 '중기부 일 잘하네, 드립 미쳤다'는 실시간 댓글 피드백이 폭발하는 것을 모니터링할 때 직무 만족도가 대기권을 돌파합니다.\n\n● 전용 실무 치트키\n[유튜브 인기 급상승 탭 트렌드 데이터] 및 [망고보드/미리캔버스 비밀 템플릿]", 
+            match: "인류애 가득한 조력자", 
+            matchBody: "내가 던지는 파격적이고 유연한 감수성을 있는 그대로 백만 불짜리 폭풍 리액션으로 칭찬해 주며, 경직된 공직 분위기 속에서 내 디자인 영감이 꺾이지 않도록 정서적으로 완벽하게 엄호해 주는 감성 단짝입니다.", 
+            clash: "조용한 문서 고수", 
+            clashBody: "시작 정렬 오차 1픽셀 깨진 것, 장평 가이드라인 미달 등 숨 막히는 서식 검열 자대를 들이대며 내 눈부신 비주얼 기획안들을 지저분한 낙서 취급하며 난도질해 놓을 때 당장 노트북 덮고 집으로 칼퇴근하고 싶어집니다." 
+        },
+        "CFR": { 
+            title: "조용한 문서 고수", 
+            line: "키보드 타건 소리조차 내지 않고 무결점 결재 보고서를 빚어냅니다.", 
+            desc: "● 실무 스타일\n말없이 구석 자리에 앉아 모니터만 응시하다가, 퇴근 직전에 완벽한 A급 기안문을 결재창에 툭 던져놓고 조용히 사라지는 행정의 은둔 명장입니다. 부서 내 주요 행정 법령이나 서식 매뉴얼 가이드라인을 사수 주무관보다 더 정확하게 간파하고 있습니다.\n\n● 사수들의 막후 평판\n'ㅇㅇ 인턴이 올린 서류는 오탈자나 수식 오류가 아예 없어서, 내가 검토 안 하고 과장님 결재창에 바로 상신해도 무조건 패스된다'는 신화적인 신뢰를 형성합니다.\n\n● 카타르시스 모먼트\n앞에 나서서 발표하거나 조장을 맡아 주목받는 것은 영혼이 무참히 털리는 고문이지만, 홀로 컴퓨터 앞에 앉아 꼬여버린 조원들의 복잡한 데이터 수식을 VLOOKUP과 매크로 함수로 완벽 정렬해 내고 오타율 0%로 마감했을 때 극상의 카타르시스를 느낍니다.\n\n● 전용 실무 치트키\n[Shift + Tab (문단 시작 정렬)] 및 [엑셀 수식 완전정복 치트키 북]", 
+            match: "실무 타임어택 해결사", 
+            matchBody: "조의 리더로서 머리 아픈 타 부서 전화 통화와 대외적 조율 스피치를 총대 매고 완벽히 전담해 주고, 나에게는 명확한 마감 기한과 원천 수치 데이터만 딱 전달해 주어 내 서류 작성 장인 정신을 200% 발휘하게 해주는 최고의 파트너입니다.", 
+            clash: "트렌디 홍보 크리에이터", 
+            clashBody: "밤새 자간 1% 단위까지 정밀 교정해서 구조를 완성해 놓은 최종 결재 보고서 양식이 있는데, 마감 10분 전에 찾아와 '요즘 유행 콘셉트는 이게 아니니 표를 다 지우고 감성 숏폼 스타일로 바꾸자'라며 즉흥 변경안을 던질 때 내면의 평화가 와르르 파괴됩니다." 
+        },
+        "CFE": { 
+            title: "PRO 서포터 묵묵이", 
+            line: "조원들의 등 뒤에서 아무도 모르게 평화와 멘탈을 수호합니다.", 
+            desc: "● 실무 스타일\n자신을 과시하며 무대 위 스포트라이트를 받는 전방 포지션은 극도로 사양하지만, 팀이 정한 마일스톤 일정을 칼같이 준수하며 아무도 안 하려는 귀찮은 부록 자료 정리와 증빙 서류 철을 도맡아 하는 공직 사회의 참된 소금 같은 존재입니다.\n\n● 사수들의 막후 평판\n'ㅇㅇ 인턴은 평소엔 조용해서 있는 듯 없는 듯한데, 막상 미션 끝나고 서류 묶인 거 보면 가장 까다로운 증빙 영수증 처리가 1원의 오차도 없이 단단하게 완비되어 있다'며 칭찬을 아끼지 않습니다.\n\n● 카타르시스 모먼트\n조원들이 회의하다 의견이 조율되지 않아 단톡방이 험악하게 얼어붙었을 때, 뒤로 슬그머니 '마음고생 많으시죠, 기운 내요'라며 비타민 음료 기프티콘과 따뜻한 메시지를 보내 조용히 장내의 인류애를 심폐소생 시켰을 때 깊은 충만감을 느낍니다.\n\n● 전용 실무 치트키\n[Alt + Shift + L (한글 줄 간격 줄이기)] 와 [부서 소모품 보관함 위치 마스터 지도]", 
+            match: "부서 소통 매니저", 
+            matchBody: "팀원들을 따뜻하게 아우르며 소통을 리드하는 화려한 팀장의 명확한 방향성을 100% 신뢰하며, 나는 보이지 않는 완벽한 서면 리서치로 서포트해 주어 리더의 권위를 가장 품격 있게 살려주는 최고의 상생 메이트입니다.", 
+            clash: "아이디어 빌드업 전략가", 
+            clashBody: "현실화 가능성도 불투명하고 중기부 예산 규정에도 안 맞는 방대하고 거대한 국가적 거시 비전 정책을 쏟아내며, 나에게 밤새 끈질긴 추가 통계 서치와 무한 수정 수정을 지시해 내 소중한 멘탈 배터리를 방전시킬 때 멀리 도망치고 싶어집니다." 
+        },
+        "CVR": { 
+            title: "독립 연구원", 
+            line: "홀로 고독방을 파고들며 중기부 정책의 본질적 대안을 발굴합니다.", 
+            desc: "● 실무 스타일\n지역 스타트업 규제 혁신 동향 분석 등 독립적인 몰입 공간과 긴 호흡의 시간만 주어지면, 타의 추종을 불허하는 깊이 있는 리서치 분석 결과물을 뽑아내는 고독한 천재형 씽커(Deep Thinker)입니다.\n\n● 사수들의 막후 평판\n'평소 부서 전체 회의에서는 영혼이 탈출한 눈으로 조용히 앉아 있어서 멍 때리는 줄 알았는데, 오후에 메일로 제출한 청년 정책 분석 리포트의 논리적 깊이와 논문 각주 수치들을 보고 과장님과 깜짝 놀랐다'는 평을 받습니다.\n\n● 카타르시스 모먼트\n사적인 잡담이나 의미 없는 스몰토크 메신저 알림을 완전히 차단한 채, 나 홀로 방대한 공직 이론과 데이터 팩트를 직조하여 보고서의 단단한 논리적 뼈대를 완벽한 구조물로 빌드업해 냈을 때 온몸에 소름이 돋는 지적 카타르시스를 느낍니다.\n\n● 전용 실무 치트키\n[Ctrl + F (찾아보기)] 와 [정부 국가통계포털(KOSIS) 정밀 필터링 스킬]", 
+            match: "아이디어 빌드업 전략가", 
+            matchBody: "서로 생각하는 기획의 도화지 스케일과 비전의 학술적 깊이가 막힘없이 통합니다. 내가 밤새 연구해 낸 고도화된 원천 리서치 데이터를 가장 세련된 발표용 카드뉴스와 스피치 멘트로 포장해 대외적으로 빛내줄 최고의 기획 파트너입니다.", 
+            clash: "부서 소통 매니저", 
+            clashBody: "한창 몰입해서 리포트 논리를 정밀하게 연결하고 있는데, 굳이 내 자리로 찾아와 '주말에 뭐 하셨어요? 커피 마시러 가요'라며 사생활 스몰토크를 걸거나 퇴근 후 단체 번개 회식을 압박하며 내 소중한 에너지 요새를 침범할 때 진심으로 방전됩니다." 
+        },
+        "CVE": { 
+            title: "인류애 가득한 조력자", 
+            line: "진심 어린 공감과 따뜻한 공공의 상생 가치를 실현합니다.", 
+            desc: "● 실무 스타일\n중소벤처·소상공인 생태계의 상생 가치관과 동기 인턴십의 본질적 의미에 누구보다 진심인 정 많고 따뜻한 휴머니스트입니다. 조원이 실무에서 오타나 수식 오류로 대형 실수를 저질러 낙담하고 있으면, 냉정한 비난 대신 '처음엔 다 그래요, 해결책 같이 찾아봐요'라며 눈물겨운 공감으로 안아줍니다.\n\n● 사수들의 막후 평판\n'ㅇㅇ 인턴은 보고서를 작성할 때도 딱딱한 수치 나열만 하는 게 아니라, 정책을 통해 구제받을 전통시장 상인들의 실질적인 애환과 인간미 있는 스토리를 담아내어 문서 읽는 사람의 마음을 뭉클하게 움직인다'며 칭찬하십니다.\n\n● 카타르시스 모먼트\n단순히 점수를 잘 받는 것을 넘어, 우리 조가 기획한 소상공인 상생 아이디어가 현장 피드백에서 '진짜 현장의 아픔을 잘 알아줬다'는 감동적인 평가를 이끌어 냈을 때 눈시울이 붉어지는 최고의 직무 보람을 마주합니다.\n\n● 전용 실무 치트키\n[Alt + Shift + K (자간 넓히기)] 와 [소상공인 현장 애로사항 인터뷰 모음집]", 
+            match: "트렌디 홍보 크리에이터", 
+            matchBody: "생각의 제약을 두지 않는 자유로운 발상과 트렌디하고 따뜻한 안목을 아낌없이 지지해 주며, 경직된 공직 분위기 속에서 정서적으로 가장 완벽한 해방감과 위로를 공유할 수 있는 영혼의 단짝 소통 파트너입니다.", 
+            clash: "실무 타임어택 해결사", 
+            clashBody: "실수할 수도 있는 동기의 상처받은 마음이나 맥락은 완전히 무시한 채, 오직 '당장 5분 뒤 보고서 제출'과 차가운 데이터 수치 마감 레이스만 맹목적으로 밀어붙여 조직 분위기를 얼음장으로 만들 때 내적 염증을 느끼고 마음을 닫게 됩니다." 
+        }
+    };
+
+    let idx = 0;
+    let scores = { EI: 0, SN: 0, TF: 0 };
+    let scoreHistory = []; 
+    let clickCount = 0;
+    let clickTimer = null;
+
+    function triggerHiddenAdmin() {
+        clickCount++;
+        if (clickCount === 1) {
+            clickTimer = setTimeout(() => { clickCount = 0; }, 1500); 
+        }
+        if (clickCount >= 3) {
+            clearTimeout(clickTimer);
+            clickCount = 0;
+            toggleAdminPanel();
+        }
+    }
+
+    function switchView(panelId) {
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        document.getElementById(panelId).classList.add('active');
+        if(panelId === 'panel-quiz') loadQuestion();
+    }
+
+    function loadQuestion() {
+        if (idx >= questions.length) {
+            calculateResult();
+            return;
+        }
+        const currentQ = questions[idx];
+        document.getElementById('quiz-progress-text').innerText = idx + 1;
+        document.getElementById('quiz-title').innerText = `${idx + 1}. ${currentQ.q}`;
+        document.getElementById('ansA').innerText = currentQ.a;
+        document.getElementById('ansB').innerText = currentQ.b;
+        document.getElementById('fill-bar').style.width = (idx / questions.length) * 100 + '%';
+    }
+
+    function processAnswer(choice) {
+        const currentQ = questions[idx];
+        const point = (choice === 'A') ? 1 : -1;
+        
+        scoreHistory.push({ type: currentQ.type, point: point });
+        scores[currentQ.type] += point;
+        idx++;
+        loadQuestion();
+    }
+
+    function goToPrevQuestion() {
+        if (idx <= 0) {
+            switchView('panel-intro');
+            return;
+        }
+        idx--;
+        const lastAction = scoreHistory.pop();
+        if (lastAction) { scores[lastAction.type] -= lastAction.point; }
+        loadQuestion();
+    }
+
+    function calculateResult() {
+        switchView('panel-result');
+        
+        let mbti = "";
+        mbti += (scores.EI >= 0) ? "O" : "C";
+        mbti += (scores.SN >= 0) ? "F" : "V";
+        mbti += (scores.TF >= 0) ? "R" : "E";
+
+        const p = profiles[mbti];
+        document.getElementById('res-code').innerText = "진단 완료";
+        document.getElementById('res-title').innerText = p.title;
+        document.getElementById('res-line').innerText = `"${p.line}"`;
+        document.getElementById('res-full').innerText = p.desc;
+        
+        document.getElementById('card-good-title').innerText = "🤝 찰떡 파트너: " + p.match;
+        document.getElementById('card-good-desc').innerText = p.matchBody;
+        document.getElementById('card-bad-title').innerText = "⚠️ 스파크 파트너: " + p.clash;
+        document.getElementById('card-bad-desc').innerText = p.clashBody;
+
+        let db = JSON.parse(localStorage.getItem('gok_mbti_db')) || [];
+        db.push(mbti);
+        localStorage.setItem('gok_mbti_db', JSON.stringify(db));
+    }
+
+    function toggleAdminPanel() {
+        const frame = document.getElementById('main-frame');
+        frame.style.maxWidth = "1100px"; 
+        switchView('panel-admin');
+        drawScreenDashboard();
+    }
+
+    function exitAdminPanel() {
+        const frame = document.getElementById('main-frame');
+        frame.style.maxWidth = "500px"; 
+        switchView('panel-intro');
+    }
+
+    function clearMockDatabase() {
+        if(confirm("현재까지 누적된 진단 데이터를 완전히 리셋하시겠습니까?")) {
+            localStorage.removeItem('gok_mbti_db');
+            alert("대시보드 데이터가 완전히 초기화되었습니다.");
+            drawScreenDashboard();
+            document.getElementById('scr-desc').innerHTML = `<div class="desc-placeholder">좌측의 인턴 유형을 선택하시면<br>대형 브리핑 카드가 활성화됩니다.</div>`;
+        }
+    }
+
+    function drawScreenDashboard() {
+        const db = JSON.parse(localStorage.getItem('gok_mbti_db')) || [];
+        document.getElementById('m-total').innerText = db.length + "명";
+
+        let counts = {};
+        Object.keys(profiles).forEach(k => counts[k] = 0);
+        db.forEach(code => { if(counts[code] !== undefined) counts[code]++; });
+
+        let max = -1, maxKey = "데이터 없음";
+        Object.keys(counts).forEach(k => {
+            if(counts[k] > max && counts[k] > 0) { max = counts[k]; maxKey = profiles[k].title; }
+        });
+        document.getElementById('m-trend').innerText = db.length > 0 ? maxKey + ` (${max}명)` : "데이터 없음";
+
+        const chartZone = document.getElementById('scr-chart');
+        chartZone.innerHTML = "";
+
+        Object.keys(counts).forEach(key => {
+            const cnt = counts[key];
+            const pct = db.length > 0 ? (cnt / db.length) * 100 : 0;
+            const row = document.createElement('div');
+            row.className = "scr-row";
+            row.id = `row-${key}`;
+            row.innerHTML = `
+                <div class="scr-label">${profiles[key].title}</div>
+                <div class="scr-bar-bg"><div class="scr-bar-fill" style="width: ${pct}%"></div></div>
+                <div class="scr-val">${cnt}명</div>
+            `;
+            row.onclick = () => focusTypeDescription(key);
+            chartZone.appendChild(row);
+        });
+    }
+
+    function focusTypeDescription(key) {
+        document.querySelectorAll('.scr-row').forEach(r => r.classList.remove('selected'));
+        document.getElementById(`row-${key}`).classList.add('selected');
+
+        const p = profiles[key];
+        const descZone = document.getElementById('scr-desc');
+        descZone.innerHTML = `
+            <div style="background-color: var(--gok-blue); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight:700; align-self: flex-start; margin-bottom:12px;">심층 브리핑 카드</div>
+            <h1 style="font-size: 24px; font-weight:800; color: var(--gok-blue); margin-bottom:8px;">${p.title}</h1>
+            <p style="font-size: 14px; font-weight:700; color: var(--gok-green); margin-bottom:14px;">"${p.line}"</p>
+            <p style="font-size: 13.5px; line-height:1.6; color: var(--text-sub); background:#fff; padding:14px; border-radius:10px; border:1px solid var(--border-line); margin-bottom:14px; white-space: pre-wrap;">${p.desc}</p>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div style="background:#f2f8ff; padding:10px; border-radius:8px; font-size:12px; white-space: pre-wrap;"><strong style="color:var(--gok-blue);">🤝 찰떡 파트너:</strong><br>${p.match}\n${p.matchBody}</div>
+                <div style="background:#fff5f5; padding:10px; border-radius:8px; font-size:12px; white-space: pre-wrap;"><strong style="color:var(--gok-red);">⚠️ 스파크 파트너:</strong><br>${p.clash}\n${p.clashBody}</div>
+            </div>
+        `;
+    }
+</script>
+
+</body>
+</html>
