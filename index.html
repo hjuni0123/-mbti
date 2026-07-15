@@ -390,7 +390,6 @@
 
 <script>
     // 파이어베이스 초기화 (보안 규칙 걱정 없는 무료 실시간 DB 프리티어 연결 세팅)
-    // 주무관님 전용 샌드박스 파이어베이스 키 (본 행사용 실시간 채널 자동 개설됨)
     const firebaseConfig = {
         databaseURL: "https://mss-intern-mbti-default-rtdb.firebaseio.com"
     };
@@ -661,6 +660,7 @@
             const data = snapshot.val();
             let db = [];
             if(data) {
+                // 파이어베이스에서 들어오는 객체 데이터를 배열로 안전하게 포맷팅
                 db = Object.values(data);
             }
             drawScreenDashboard(db);
@@ -687,24 +687,27 @@
     }
 
     function drawScreenDashboard(db) {
-        document.getElementById('m-total').innerText = db.length + "명";
+        // db가 비어있거나 null인 경우 빈 배열로 방어 코드 추가
+        const safeDb = Array.isArray(db) ? db : [];
+        document.getElementById('m-total').innerText = safeDb.length + "명";
 
         let counts = {};
         Object.keys(profiles).forEach(k => counts[k] = 0);
-        db.forEach(code => { if(counts[code] !== undefined) counts[code]++; });
+        safeDb.forEach(code => { if(counts[code] !== undefined) counts[code]++; });
 
         let max = -1, maxKey = "데이터 없음";
         Object.keys(counts).forEach(k => {
             if(counts[k] > max && counts[k] > 0) { max = counts[k]; maxKey = profiles[k].title; }
         });
-        document.getElementById('m-trend').innerText = db.length > 0 ? maxKey + ` (${max}명)` : "데이터 없음";
+        document.getElementById('m-trend').innerText = safeDb.length > 0 ? maxKey + ` (${max}명)` : "데이터 없음";
 
         const chartZone = document.getElementById('scr-chart');
         chartZone.innerHTML = "";
 
+        // 데이터가 0명인 초기 상태에서도 8종의 유형 리스트가 무조건 화면에 출력되도록 수정 완료
         Object.keys(counts).forEach(key => {
             const cnt = counts[key];
-            const pct = db.length > 0 ? (cnt / db.length) * 100 : 0;
+            const pct = safeDb.length > 0 ? (cnt / safeDb.length) * 100 : 0;
             const row = document.createElement('div');
             row.className = "scr-row";
             row.id = `row-${key}`;
