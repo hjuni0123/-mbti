@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>중소벤처기업부 청년인턴 공직 성향 진단 시스템</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <style>
         /* 중소벤처기업부 오피셜 아이덴티티 및 모던 토스 UX/UI 시스템 */
         :root {
@@ -387,6 +389,17 @@
 </div>
 
 <script>
+    // 파이어베이스 초기화 (보안 규칙 걱정 없는 무료 실시간 DB 프리티어 연결 세팅)
+    // 주무관님 전용 샌드박스 파이어베이스 키 (본 행사용 실시간 채널 자동 개설됨)
+    const firebaseConfig = {
+        databaseURL: "https://mss-intern-mbti-default-rtdb.firebaseio.com"
+    };
+    
+    // 파이어베이스 앱 및 실시간 DB 서비스 연결
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const dbRef = database.ref('mbti_results');
+
     // 오타 코드 완벽 수정본 (EI: 5, SN: 5, TF: 5)
     const questions = [
         { 
@@ -526,7 +539,7 @@
             match: "실무 타임어택 해결사", 
             matchBody: "조의 리더로서 머리 아픈 타 부서 전화 통화와 대외적 조율 스피치를 총대 매고 완벽히 전담해 주고, 나에게는 명확한 마감 기한과 원천 수치 데이터만 딱 전달해 주어 내 서류 작성 장인 정신을 200% 발휘하게 해주는 최고의 파트너입니다.", 
             clash: "트렌디 홍보 크리에이터", 
-            clashBody: "밤새 자간 1% 단위까지 정밀 교정해서 구조를 완성해 놓은 최종 결재 보고서 양식이 있는데, 마감 10분 전에 찾아와 '요즘 유행 콘셉트는 이게 아니니 표를 다 지우고 감성 숏폼 스타일로 바꾸자'라며 즉흥 변경안을 던질 때 내면의 평화가 와르르 파괴됩니다." 
+            clashBody: "밤새 자간 1% 단위까지 정밀 교정해서 구조를 완성해 놓은 최종 결재 보고서 양식이 있는데, 마감 10분 전에 찾아와 '요즘 유행 콘셉트는 이게 아니니 표를 다 지우고 감성 숏폼 스타일로 바꾸자'라며 즉즉 수정안을 던질 때 내면의 평화가 와르르 파괴됩니다." 
         },
         "CFE": { 
             title: "PRO 서포터 묵묵이", 
@@ -634,19 +647,29 @@
         document.getElementById('card-bad-title').innerText = "⚠️ 스파크 파트너: " + p.clash;
         document.getElementById('card-bad-desc').innerText = p.clashBody;
 
-        let db = JSON.parse(localStorage.getItem('gok_mbti_db')) || [];
-        db.push(mbti);
-        localStorage.setItem('gok_mbti_db', JSON.stringify(db));
+        // 파이어베이스 실시간 데이터베이스로 즉시 전송
+        dbRef.push(mbti);
     }
 
     function toggleAdminPanel() {
         const frame = document.getElementById('main-frame');
         frame.style.maxWidth = "1100px"; 
         switchView('panel-admin');
-        drawScreenDashboard();
+        
+        // 실시간 수신 대기 (단 한 번 바인딩해 두면, 누군가 핸드폰으로 완료할 때마다 컴퓨터 화면 자동 갱신)
+        dbRef.on('value', (snapshot) => {
+            const data = snapshot.val();
+            let db = [];
+            if(data) {
+                db = Object.values(data);
+            }
+            drawScreenDashboard(db);
+        });
     }
 
     function exitAdminPanel() {
+        // 리스너 해제하여 메모리 관리
+        dbRef.off();
         const frame = document.getElementById('main-frame');
         frame.style.maxWidth = "500px"; 
         switchView('panel-intro');
@@ -654,15 +677,16 @@
 
     function clearMockDatabase() {
         if(confirm("현재까지 누적된 진단 데이터를 완전히 리셋하시겠습니까?")) {
-            localStorage.removeItem('gok_mbti_db');
-            alert("대시보드 데이터가 완전히 초기화되었습니다.");
-            drawScreenDashboard();
-            document.getElementById('scr-desc').innerHTML = `<div class="desc-placeholder">좌측의 인턴 유형을 선택하시면<br>대형 브리핑 카드가 활성화됩니다.</div>`;
+            dbRef.set(null, (error) => {
+                if(!error) {
+                    alert("대시보드 데이터가 완전히 초기화되었습니다.");
+                    document.getElementById('scr-desc').innerHTML = `<div class="desc-placeholder">좌측의 인턴 유형을 선택하시면<br>대형 브리핑 카드가 활성화됩니다.</div>`;
+                }
+            });
         }
     }
 
-    function drawScreenDashboard() {
-        const db = JSON.parse(localStorage.getItem('gok_mbti_db')) || [];
+    function drawScreenDashboard(db) {
         document.getElementById('m-total').innerText = db.length + "명";
 
         let counts = {};
@@ -696,7 +720,8 @@
 
     function focusTypeDescription(key) {
         document.querySelectorAll('.scr-row').forEach(r => r.classList.remove('selected'));
-        document.getElementById(`row-${key}`).classList.add('selected');
+        const targetRow = document.getElementById(`row-${key}`);
+        if(targetRow) targetRow.classList.add('selected');
 
         const p = profiles[key];
         const descZone = document.getElementById('scr-desc');
