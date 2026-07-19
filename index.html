@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>중소벤처기업부 청년인턴 공직 성향 진단 시스템</title>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <style>
         /* 중소벤처기업부 오피셜 아이덴티티 및 모던 토스 UX/UI 시스템 */
         :root {
@@ -382,24 +380,23 @@
                     <div class="desc-placeholder">좌측의 인턴 유형을 선택하시면<br>대형 브리핑 카드가 활성화됩니다.</div>
                 </div>
             </div>
-            <button class="reset-action-btn" onclick="clearMockDatabase()">대시보드 누적 데이터 전체 초기화</button>
+            <button class="reset-action-btn" onclick="clearDatabasePrompt()">대시보드 안내 확인</button>
             <button class="action-btn" style="background-color: var(--text-main); margin-top: 14px;" onclick="exitAdminPanel()">테스트 메인으로 복귀</button>
         </div>
     </div>
 </div>
 
 <script>
-    // 파이어베이스 초기화 (보안 규칙 걱정 없는 무료 실시간 DB 프리티어 연결 세팅)
-    const firebaseConfig = {
-        databaseURL: "https://mss-intern-mbti-default-rtdb.firebaseio.com"
-    };
-    
-    // 파이어베이스 앱 및 실시간 DB 서비스 연결
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
-    const dbRef = database.ref('mbti_results');
+    // 🔗 제공해주신 구글 웹 앱 URL 매핑 완료
+    const GOOGLE_APP_URL = "https://script.google.com/macros/s/AKfycbxfxPuDT0J7vx2Dc-X6_PY8kS6WZMCOR5SLW8VS23n-Yf0W6d-TT4Ay8GQjpRFamZeKxQ/exec";
 
-    // 오타 코드 완벽 수정본 (EI: 5, SN: 5, TF: 5)
+    let adminInterval = null;
+    let idx = 0;
+    let scores = { EI: 0, SN: 0, TF: 0 };
+    let scoreHistory = []; 
+    let clickCount = 0;
+    let clickTimer = null;
+
     const questions = [
         { 
             type: 'EI', 
@@ -543,7 +540,7 @@
         "CFE": { 
             title: "PRO 서포터 묵묵이", 
             line: "조원들의 등 뒤에서 아무도 모르게 평화와 멘탈을 수호합니다.", 
-            desc: "● 실무 스타일\n자신을 과시하며 무대 위 스포트라이트를 받는 전방 포지션은 극도로 사양하지만, 팀이 정한 마일스톤 일정을 칼같이 준수하며 아무도 안 하려는 귀찮은 부록 자료 정리와 증빙 서류 철을 도맡아 하는 공직 사회의 참된 소금 같은 존재입니다.\n\n● 사수들의 막후 평판\n'ㅇㅇ 인턴은 평소엔 조용해서 있는 듯 없는 듯한데, 막상 미션 끝나고 서류 묶인 거 보면 가장 까다로운 증빙 영수증 처리가 1원의 오차도 없이 단단하게 완비되어 있다'며 칭찬을 아끼지 않습니다.\n\n● 카타르시스 모먼트\n조원들이 회의하다 의견이 조율되지 않아 단톡방이 험악하게 얼어붙었을 때, 뒤로 슬그머니 '마음고생 많으시죠, 기운 내요'라며 비타민 음료 기프티콘과 따뜻한 메시지를 보내 조용히 장내의 인류애를 심폐소생 시켰을 때 깊은 충만감을 느낍니다.\n\n● 전용 실무 치트키\n[Alt + Shift + L (한글 줄 간격 줄이기)] 와 [부서 소모품 보관함 위치 마스터 지도]", 
+            desc: "● 실무 스타일\n자신을 과시하며 무대 위 스포트라이트를 받는 전방 포지션은 극도로 사양하지만, 팀이 정한 마일스톤 일정을 칼같이 준수하며 아무도 안 하려는 귀찮은 부록 자료 정리와 증빙 서류 철을 도맡아 하는 공직 사회의 참된 소금 같은 존재입니다.\n\n● 사수들의 막후 평판\n'ㅇㅇ 인턴은 평소엔 조용해서 있는 듯 없는 듯한데, 막상 미션 끝나고 서류 묶인 거 보면 가장 까다로운 증빙 영수증 처리가 1원의 오차도 없이 단단하게 완비되어 있다'며 칭찬하십니다.\n\n● 카타르시스 모먼트\n조원들이 회의하다 의견이 조율되지 않아 단톡방이 험악하게 얼어붙었을 때, 뒤로 슬그머니 '마음고생 많으시죠, 기운 내요'라며 비타민 음료 기프티콘과 따뜻한 메시지를 보내 조용히 장내의 인류애를 심폐소생 시켰을 때 깊은 충만감을 느낍니다.\n\n● 전용 실무 치트키\n[Alt + Shift + L (한글 줄 간격 줄이기)] 와 [부서 소모품 보관함 위치 마스터 지도]", 
             match: "부서 소통 매니저", 
             matchBody: "팀원들을 따뜻하게 아우르며 소통을 리드하는 화려한 팀장의 명확한 방향성을 100% 신뢰하며, 나는 보이지 않는 완벽한 서면 리서치로 서포트해 주어 리더의 권위를 가장 품격 있게 살려주는 최고의 상생 메이트입니다.", 
             clash: "아이디어 빌드업 전략가", 
@@ -569,22 +566,10 @@
         }
     };
 
-    let idx = 0;
-    let scores = { EI: 0, SN: 0, TF: 0 };
-    let scoreHistory = []; 
-    let clickCount = 0;
-    let clickTimer = null;
-
     function triggerHiddenAdmin() {
         clickCount++;
-        if (clickCount === 1) {
-            clickTimer = setTimeout(() => { clickCount = 0; }, 1500); 
-        }
-        if (clickCount >= 3) {
-            clearTimeout(clickTimer);
-            clickCount = 0;
-            toggleAdminPanel();
-        }
+        if (clickCount === 1) { clickTimer = setTimeout(() => { clickCount = 0; }, 1500); }
+        if (clickCount >= 3) { clearTimeout(clickTimer); clickCount = 0; toggleAdminPanel(); }
     }
 
     function switchView(panelId) {
@@ -594,10 +579,7 @@
     }
 
     function loadQuestion() {
-        if (idx >= questions.length) {
-            calculateResult();
-            return;
-        }
+        if (idx >= questions.length) { calculateResult(); return; }
         const currentQ = questions[idx];
         document.getElementById('quiz-progress-text').innerText = idx + 1;
         document.getElementById('quiz-title').innerText = `${idx + 1}. ${currentQ.q}`;
@@ -609,7 +591,6 @@
     function processAnswer(choice) {
         const currentQ = questions[idx];
         const point = (choice === 'A') ? 1 : -1;
-        
         scoreHistory.push({ type: currentQ.type, point: point });
         scores[currentQ.type] += point;
         idx++;
@@ -617,10 +598,7 @@
     }
 
     function goToPrevQuestion() {
-        if (idx <= 0) {
-            switchView('panel-intro');
-            return;
-        }
+        if (idx <= 0) { switchView('panel-intro'); return; }
         idx--;
         const lastAction = scoreHistory.pop();
         if (lastAction) { scores[lastAction.type] -= lastAction.point; }
@@ -629,7 +607,6 @@
 
     function calculateResult() {
         switchView('panel-result');
-        
         let mbti = "";
         mbti += (scores.EI >= 0) ? "O" : "C";
         mbti += (scores.SN >= 0) ? "F" : "V";
@@ -646,8 +623,8 @@
         document.getElementById('card-bad-title').innerText = "⚠️ 스파크 파트너: " + p.clash;
         document.getElementById('card-bad-desc').innerText = p.clashBody;
 
-        // 파이어베이스 실시간 데이터베이스로 즉시 전송
-        dbRef.push(mbti);
+        // 구글 앱스 스크립트로 안전하게 비동기 전송 처리 완료
+        fetch(`${GOOGLE_APP_URL}?mbti=${mbti}`, { method: 'POST', mode: 'no-cors' });
     }
 
     function toggleAdminPanel() {
@@ -655,59 +632,52 @@
         frame.style.maxWidth = "1100px"; 
         switchView('panel-admin');
         
-        // 실시간 수신 대기 (단 한 번 바인딩해 두면, 누군가 핸드폰으로 완료할 때마다 컴퓨터 화면 자동 갱신)
-        dbRef.on('value', (snapshot) => {
-            const data = snapshot.val();
-            let db = [];
-            if(data) {
-                // 파이어베이스에서 들어오는 객체 데이터를 배열로 안전하게 포맷팅
-                db = Object.values(data);
-            }
-            drawScreenDashboard(db);
-        });
+        fetchAndRenderData();
+        // 3초 간격으로 구글 시트 데이터 로드하여 그래프 자동 갱신
+        adminInterval = setInterval(fetchAndRenderData, 3000);
     }
 
     function exitAdminPanel() {
-        // 리스너 해제하여 메모리 관리
-        dbRef.off();
+        if(adminInterval) clearInterval(adminInterval);
         const frame = document.getElementById('main-frame');
         frame.style.maxWidth = "500px"; 
         switchView('panel-intro');
     }
 
-    function clearMockDatabase() {
-        if(confirm("현재까지 누적된 진단 데이터를 완전히 리셋하시겠습니까?")) {
-            dbRef.set(null, (error) => {
-                if(!error) {
-                    alert("대시보드 데이터가 완전히 초기화되었습니다.");
-                    document.getElementById('scr-desc').innerHTML = `<div class="desc-placeholder">좌측의 인턴 유형을 선택하시면<br>대형 브리핑 카드가 활성화됩니다.</div>`;
-                }
-            });
-        }
+    function clearDatabasePrompt() {
+        alert("구글 연동 모드입니다. 데이터를 전체 리셋하시려면 연결된 구글 스프레드시트 파일로 들어가서 행(Row)을 마우스로 드래그하여 직접 삭제(첫 행 제외)해주시면 대시보드에 즉시 반영됩니다.");
+    }
+
+    function fetchAndRenderData() {
+        fetch(GOOGLE_APP_URL)
+            .then(res => res.json())
+            .then(db => {
+                // 헤더나 시스템 유효값이 아닌 빈 배열 원천 필터링
+                const safeDb = db.filter(item => item && item !== "undefined" && Object.keys(profiles).includes(item));
+                drawScreenDashboard(safeDb);
+            })
+            .catch(err => console.error("스프레드시트 데이터 연동 실패:", err));
     }
 
     function drawScreenDashboard(db) {
-        // db가 비어있거나 null인 경우 빈 배열로 방어 코드 추가
-        const safeDb = Array.isArray(db) ? db : [];
-        document.getElementById('m-total').innerText = safeDb.length + "명";
+        document.getElementById('m-total').innerText = db.length + "명";
 
         let counts = {};
         Object.keys(profiles).forEach(k => counts[k] = 0);
-        safeDb.forEach(code => { if(counts[code] !== undefined) counts[code]++; });
+        db.forEach(code => { if(counts[code] !== undefined) counts[code]++; });
 
         let max = -1, maxKey = "데이터 없음";
         Object.keys(counts).forEach(k => {
             if(counts[k] > max && counts[k] > 0) { max = counts[k]; maxKey = profiles[k].title; }
         });
-        document.getElementById('m-trend').innerText = safeDb.length > 0 ? maxKey + ` (${max}명)` : "데이터 없음";
+        document.getElementById('m-trend').innerText = db.length > 0 ? maxKey + ` (${max}명)` : "데이터 없음";
 
         const chartZone = document.getElementById('scr-chart');
         chartZone.innerHTML = "";
 
-        // 데이터가 0명인 초기 상태에서도 8종의 유형 리스트가 무조건 화면에 출력되도록 수정 완료
         Object.keys(counts).forEach(key => {
             const cnt = counts[key];
-            const pct = safeDb.length > 0 ? (cnt / safeDb.length) * 100 : 0;
+            const pct = db.length > 0 ? (cnt / db.length) * 100 : 0;
             const row = document.createElement('div');
             row.className = "scr-row";
             row.id = `row-${key}`;
@@ -740,6 +710,5 @@
         `;
     }
 </script>
-
 </body>
 </html>
